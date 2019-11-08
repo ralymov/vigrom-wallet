@@ -13,7 +13,7 @@ return [
     | to any of the currencies which will be supported by the application.
     |
     */
-    'default' => Currency::RUB,
+    'default' => Currency::USD,
 
     /*
     |--------------------------------------------------------------------------
