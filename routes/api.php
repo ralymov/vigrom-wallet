@@ -18,4 +18,5 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::get('wallets/refund-sum', [WalletController::class, 'refundSum']);
 Route::apiResource('wallets', WalletController::class)->except(['store', 'destroy']);

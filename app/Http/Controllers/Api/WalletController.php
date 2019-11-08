@@ -47,4 +47,19 @@ class WalletController extends ApiController
         });
         return response()->json($wallet);
     }
+
+    public function refundSum()
+    {
+        $query = "
+        SELECT coalesce(SUM(amount), 0) AS amount
+        FROM transactions
+        WHERE reason_id=
+            (SELECT id
+             FROM transaction_reasons tr
+             WHERE tr.code='stock')
+          AND created_at > CURRENT_DATE - interval '7 days';
+        ";
+        $result = DB::select($query)[0];
+        return response()->json($result);
+    }
 }

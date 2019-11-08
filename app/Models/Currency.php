@@ -5,6 +5,7 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 
 /**
+ * Exchange rate calculates relative to default application currency (set in config/currency.php)
  * @property int id
  * @property string code
  * @property float exchange_rate
