@@ -2,38 +2,37 @@
 
 namespace App;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Wallet;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property int id
+ * @property string name
+ * @property string email
+ * @property string password
+ * @property string api_token
+ * @property int wallet_id
+ */
 class User extends Authenticatable
 {
     use Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
-    protected $fillable = [
-        'name', 'email', 'password',
-    ];
+    protected $fillable = ['name', 'email', 'password',];
+    protected $hidden = ['password', 'remember_token',];
+    protected $casts = ['email_verified_at' => 'datetime',];
 
     /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
+     * Set the password using bcrypt hash.
+     * @param $value
      */
-    protected $hidden = [
-        'password', 'remember_token',
-    ];
+    public function setPasswordAttribute($value)
+    {
+        $this->attributes['password'] = (password_get_info($value)['algo'] === 0) ? bcrypt($value) : $value;
+    }
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    public function wallet()
+    {
+        return $this->belongsTo(Wallet::class);
+    }
 }
