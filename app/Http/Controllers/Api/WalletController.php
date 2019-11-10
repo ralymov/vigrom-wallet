@@ -9,10 +9,8 @@ use App\Models\TransactionReason;
 use App\Models\TransactionType;
 use App\Models\Wallet;
 use App\Services\ConvertCurrencyService;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use mysql_xdevapi\Exception;
 
 class WalletController extends ApiController
 {
