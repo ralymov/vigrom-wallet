@@ -13,6 +13,14 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Wallet extends Model
 {
+    public function setAmountAttribute($value)
+    {
+        $this->attributes['amount'] = $value;
+        if ($this->attributes['amount'] < 0) {
+            throw new \Exception('Wallet total amount cannot be negative.');
+        }
+    }
+
     public function currency()
     {
         return $this->belongsTo(Currency::class);

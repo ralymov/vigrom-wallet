@@ -43,9 +43,6 @@ class WalletController extends ApiController
                 $amount = ConvertCurrencyService::convert($currency, $wallet->currency, $amount);
             }
             $wallet->amount += $amount;
-            if ($wallet->amount < 0) {
-                throw new \Exception('Wallet total amount cannot be negative.');
-            }
 
             $wallet->save();
             Transaction::create([

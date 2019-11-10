@@ -14,7 +14,7 @@ class ConvertCurrencyService
         if ($from->code === config('currency.default')) {
             $result = $amount * $toRate;
         } else {
-            //Convert Currencies via USD
+            //Convert Currencies
             $result = $toRate * ($amount / $fromRate);
         }
         return $result;
