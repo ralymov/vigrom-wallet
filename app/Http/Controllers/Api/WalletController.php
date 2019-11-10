@@ -9,8 +9,10 @@ use App\Models\TransactionReason;
 use App\Models\TransactionType;
 use App\Models\Wallet;
 use App\Services\ConvertCurrencyService;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use mysql_xdevapi\Exception;
 
 class WalletController extends ApiController
 {
@@ -21,28 +23,29 @@ class WalletController extends ApiController
 
     public function show(int $walletId)
     {
-        $wallet = Wallet::whereId($walletId)->with('currency')->first();
+        $wallet = Wallet::whereId($walletId)->with('currency')->firstOrFail();
         return response()->json($wallet);
     }
 
-    //TODO REFACTOR THIS
     public function update(Request $request, Wallet $wallet)
     {
         $this->validate($request, [
-            'amount' => 'required|integer',
+            'amount' => 'required|required|regex:/^-?\d*(\.\d{1,2})?$/',
             'currency' => 'required|max:3|exists:currencies,code',
             'transaction_type' => 'required|max:255|exists:transaction_types,code',
             'reason' => 'required|max:255|exists:transaction_reasons,code'
         ]);
         $amount = $request->input('amount');
         $currency = Currency::whereCode($request->input('currency'))->first();
+
         if ($currency->id !== $wallet->currency_id) {
             $amount = ConvertCurrencyService::convert($currency, $wallet->currency, $amount);
         }
         $wallet->amount += $amount;
         if ($wallet->amount < 0) {
-            return response()->json('error', 500);
+            throw new \Exception('Wallet total amount cannot be negative.');
         }
+
         DB::transaction(function () use ($request, $wallet, $amount, $currency) {
             $wallet->save();
             Transaction::create([
@@ -53,7 +56,8 @@ class WalletController extends ApiController
                 'currency_id' => $currency->id,
             ]);
         });
-        return response()->json($wallet);
+
+        return response()->json($wallet->fresh());
     }
 
     public function refundSum()

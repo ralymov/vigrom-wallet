@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property int id
- * @property int amount
+ * @property float amount
  * @property int currency_id
  * @property Currency currency
  */

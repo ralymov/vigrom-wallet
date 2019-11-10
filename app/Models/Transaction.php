@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int wallet_id
  * @property int type_id
  * @property int reason_id
- * @property int amount
+ * @property float amount
  */
 class Transaction extends Model
 {
