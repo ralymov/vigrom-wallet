@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Currency;
 use App\Http\Controllers\ApiController;
+use App\Http\Resources\WalletResource;
 use App\Models\Transaction;
 use App\Models\TransactionReason;
 use App\Models\TransactionType;
@@ -21,8 +22,7 @@ class WalletController extends ApiController
 
     public function show(int $walletId)
     {
-        $wallet = Wallet::whereId($walletId)->with('currency')->firstOrFail();
-        return response()->json($wallet);
+        return response()->json(new WalletResource(Wallet::find($walletId)));
     }
 
     public function update(Request $request, Wallet $wallet)
@@ -54,8 +54,8 @@ class WalletController extends ApiController
                 'currency_id' => $currency->id,
             ]);
         });
-
-        return response()->json($wallet->fresh());
+        
+        return response()->json(new WalletResource($wallet->fresh()));
     }
 
     public function refundSum()
