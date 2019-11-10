@@ -25,7 +25,7 @@ class WalletController extends ApiController
         return response()->json(new WalletResource(Wallet::find($walletId)));
     }
 
-    public function update(Request $request, Wallet $wallet)
+    public function update(Request $request, $walletId)
     {
         $this->validate($request, [
             'amount' => 'required|required|regex:/^-?\d*(\.\d{1,2})?$/',
@@ -33,18 +33,20 @@ class WalletController extends ApiController
             'transaction_type' => 'required|max:255|exists:transaction_types,code',
             'reason' => 'required|max:255|exists:transaction_reasons,code'
         ]);
-        $amount = $request->input('amount');
-        $currency = Currency::whereCode($request->input('currency'))->first();
 
-        if ($currency->id !== $wallet->currency_id) {
-            $amount = ConvertCurrencyService::convert($currency, $wallet->currency, $amount);
-        }
-        $wallet->amount += $amount;
-        if ($wallet->amount < 0) {
-            throw new \Exception('Wallet total amount cannot be negative.');
-        }
+        DB::transaction(function () use ($walletId, $request) {
+            $wallet = Wallet::lockForUpdate()->findOrFail($walletId);
+            $amount = $request->input('amount');
+            $currency = Currency::whereCode($request->input('currency'))->first();
 
-        DB::transaction(function () use ($request, $wallet, $amount, $currency) {
+            if ($currency->id !== $wallet->currency_id) {
+                $amount = ConvertCurrencyService::convert($currency, $wallet->currency, $amount);
+            }
+            $wallet->amount += $amount;
+            if ($wallet->amount < 0) {
+                throw new \Exception('Wallet total amount cannot be negative.');
+            }
+
             $wallet->save();
             Transaction::create([
                 'wallet_id' => $wallet->id,
@@ -54,8 +56,8 @@ class WalletController extends ApiController
                 'currency_id' => $currency->id,
             ]);
         });
-        
-        return response()->json(new WalletResource($wallet->fresh()));
+
+        return response()->json(new WalletResource(Wallet::findOrFail($walletId)));
     }
 
     public function refundSum()
