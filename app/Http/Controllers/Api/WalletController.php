@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Currency;
 use App\Http\Controllers\ApiController;
 use App\Models\Transaction;
 use App\Models\TransactionReason;
 use App\Models\TransactionType;
 use App\Models\Wallet;
+use App\Services\ConvertCurrencyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -23,6 +25,7 @@ class WalletController extends ApiController
         return response()->json($wallet);
     }
 
+    //TODO REFACTOR THIS
     public function update(Request $request, Wallet $wallet)
     {
         $this->validate($request, [
@@ -32,17 +35,22 @@ class WalletController extends ApiController
             'reason' => 'required|max:255|exists:transaction_reasons,code'
         ]);
         $amount = $request->input('amount');
+        $currency = Currency::whereCode($request->input('currency'))->first();
+        if ($currency->id !== $wallet->currency_id) {
+            $amount = ConvertCurrencyService::convert($currency, $wallet->currency, $amount);
+        }
         $wallet->amount += $amount;
         if ($wallet->amount < 0) {
-            return response()->json('oh shit', 500);
+            return response()->json('error', 500);
         }
-        DB::transaction(function () use ($request, $wallet, $amount) {
+        DB::transaction(function () use ($request, $wallet, $amount, $currency) {
             $wallet->save();
             Transaction::create([
                 'wallet_id' => $wallet->id,
                 'type_id' => TransactionType::whereCode($request->input('transaction_type'))->first()->id,
                 'reason_id' => TransactionReason::whereCode($request->input('reason'))->first()->id,
-                'amount' => $amount
+                'amount' => $amount,
+                'currency_id' => $currency->id,
             ]);
         });
         return response()->json($wallet);
